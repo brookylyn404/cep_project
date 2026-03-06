@@ -1,23 +1,38 @@
-from backend.pipeline.fetch_history import fetch_historical_nav
+import pandas as pd
+from backend.pipeline.fetch import fetch_nav_data
+from backend.pipeline.clean import clean_historical_nav
 from backend.pipeline.store import store_data
 from backend.pipeline.risk import calculate_daily_return
-from datetime import datetime
 
-mutual_funds = ["119551", "119552", "119553", "108272", "110282"]
 
 def run_historical_pipeline():
     print("Historical pipeline starting...")
 
-    df = fetch_historical_nav(mutual_funds, years=3)
-    print("Historical NAV fetched!")
-    print(df.head())
+    funds = pd.read_csv("data/master_funds.csv")
 
-    df = calculate_daily_return(df)
-    print("ML features calculated!")
-    print(df.head())
+    for _, row in funds.iterrows():
+        scheme_code = row["scheme_code"]
+        fund_name = row["fund_name"]
 
-    store_data(df, "historical")
-    print("Historical data stored!")
+        print(f"Processing {fund_name}")
+
+        raw_data = fetch_nav_data(scheme_code)
+
+        if raw_data is None:
+            continue
+
+        df = clean_historical_nav(raw_data, years=3)
+
+        if df.empty:
+            continue
+
+        df["scheme_code"] = scheme_code
+        df = calculate_daily_return(df)
+
+        store_data(df, fund_name)
+
+        print(f"{fund_name} completed\n")
+
 
 if __name__ == "__main__":
     run_historical_pipeline()

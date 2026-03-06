@@ -1,12 +1,22 @@
-import pandas as pd
 import os
 
-def store_data(df, year):
-    # Create data folder if it doesn't exist
-    os.makedirs("data", exist_ok=True)
 
-    # Save the cleaned NAV data for the given year
-    file_path = f"data/navs_{year}.parquet"
+def store_data(df, fund_name):
+    """
+    Store cleaned NAV data per fund as parquet
+    """
+
+    output_folder = "data/nav_processed"
+    os.makedirs(output_folder, exist_ok=True)
+
+    safe_name = (
+        fund_name.replace(" ", "_")
+        .replace("-", "")
+        .replace("&", "")
+    )
+
+    file_path = f"{output_folder}/{safe_name}.parquet"
+
     df.to_parquet(file_path, index=False)
 
-    print(f"Data for {year} stored successfully at {file_path}")
+    print(f"{fund_name} stored successfully at {file_path}")
